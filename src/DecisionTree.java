@@ -432,7 +432,8 @@ public class DecisionTree {
         // The attributes index array. To indicate the remaining unsplit attributes.
         // Initially all attributes are remained.
         for (int i = 0; i < this.trainData.entries.get(0).attributes.size(); i ++) {
-            attributes.add(i);
+            if (this.chosenAttributes.get(i))
+                attributes.add(i);
         }
 
         this.start = new Node();
