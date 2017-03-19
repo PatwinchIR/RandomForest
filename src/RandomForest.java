@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import javafx.util.Pair;
 
 /**
  * Created by d_d on 3/1/17.
@@ -37,6 +38,9 @@ public class RandomForest {
 
     // Indicates the Random subspace in Random Forest.
     public int attrSubspaceNum;
+    
+    // The confusion matrix.
+    private Map<Pair<String, String>, Integer> confusionMatrix;
 
 
     /**
@@ -206,6 +210,108 @@ public class RandomForest {
             System.out.println("\n\n");
         }
     }
+    
+        /**
+     * A utility function to print n whitespaces.
+     * @param n The number of whitespaces to print.
+     */
+    private void printWhitespaces(int n) {
+        for (int i = 0; i < n; i ++){
+            System.out.print(" ");
+        }
+    }
+
+    /**
+     * A utility function to print Confusion Matrix delimiter.
+     */
+    private void printDelimeter() {
+        System.out.print("|");
+    }
+
+    /**
+     * A utility function to print line seperator.
+     * @param n The number of columns.
+     * @param size The width of per column.
+     */
+    private void printLine(int n, int size) {
+        printDelimeter();
+        for (int i = 0; i < n * (size + 1) + size; i ++) {
+            System.out.print("=");
+        }
+        printDelimeter();
+        System.out.println();
+    }
+
+    /**
+     * A utility function to print Matrix head.
+     * @param n The number of columns.
+     * @param size The width of per column.
+     */
+    private void printMatrixHead(int n, int size) {
+        int width = n * (size + 1) + size;
+        String head = "Confusion Matrix";
+        printWhitespaces((width - head.length()) / 2);
+        System.out.println(head);
+        printLine(n, size);
+    }
+
+    /**
+     * A utility to print confusion matrix.
+     */
+    public void confusionMatrixPrint() {
+        Map<String, Integer> labelsCount = this.randomForest.get(0).root.labelsCount;
+        List<String> labels = new ArrayList<>();
+
+        int longest = 0;
+        Iterator it = labelsCount.entrySet().iterator();
+        while (it.hasNext()) {
+            String al = (String) ((Map.Entry) it.next()).getKey();
+            longest = al.length() > longest ? al.length() : longest;
+            if (!labels.contains(al)) {
+                labels.add(al);
+            }
+        }
+        printMatrixHead(longest, labels.size());
+        printDelimeter();
+        printWhitespaces(longest);
+        printDelimeter();
+        for (String label: labels) {
+            printWhitespaces(longest - label.length());
+            System.out.print(label);
+            printDelimeter();
+        }
+        System.out.print("\n");
+        printLine(longest, labels.size());
+        for (int i = 0; i < labels.size(); i ++) {
+            String al = labels.get(i);
+            printDelimeter();
+            printWhitespaces(longest - al.length());
+            System.out.print(al);
+            printDelimeter();
+            for (String label: labels) {
+                Integer count = this.confusionMatrix.get(new Pair<>(al, label));
+                String num = count == null ? "0" : String.valueOf(count);
+                printWhitespaces(longest - num.length());
+                System.out.print(num);
+                printDelimeter();
+            }
+            System.out.print("\n");
+            printLine(longest, labels.size());
+        }
+    }
+
+    /**
+     * A utility to update confusion matrix.
+     * @param pair The <actual label, predict label> pair.
+     */
+    private void updateConfusionMatrix(Pair<String, String> pair) {
+        if (this.confusionMatrix.containsKey(pair)) {
+            int count = this.confusionMatrix.get(pair);
+            this.confusionMatrix.put(pair, ++ count);
+        } else {
+            this.confusionMatrix.put(pair, 1);
+        }
+    }
 
 
     /**
@@ -242,7 +348,10 @@ public class RandomForest {
             }
 
             System.out.println();
-
+            
+            Pair<String, String> pair = new Pair<>(e.label, finalLabel);
+            updateConfusionMatrix(pair);
+            
             all ++;
         }
         double accuracy = correct / all;
